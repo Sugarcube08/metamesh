@@ -1,15 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { AppProvider } from "@/lib/app-context"
-import { CardanoWalletProvider, useCardanoWallet } from "@/lib/wallet/cardano-wallet-context"
 import { OnboardingScreen } from "@/components/screens/onboarding-screen"
-import { ConnectWalletScreen } from "@/components/screens/connect-wallet-screen"
 import { LoginScreen } from "@/components/screens/login-screen"
+import { ImportWalletScreen } from "@/components/screens/import-wallet-screen"
 import { OTPScreen } from "@/components/screens/otp-screen"
 import { HomeScreen } from "@/components/screens/home-screen"
 import { ChatScreen } from "@/components/screens/chat-screen"
-import { ChatScreenEnhanced } from "@/components/screens/chat-screen-enhanced"
 import { NewChatScreen } from "@/components/screens/new-chat-screen"
 import { ProfileScreen } from "@/components/screens/profile-screen"
 import { WalletScreen } from "@/components/screens/wallet-screen"
@@ -29,8 +27,8 @@ import { NotificationsScreen } from "@/components/screens/notifications-screen"
 
 export type Screen =
   | "onboarding"
-  | "connect-wallet"
   | "login"
+  | "import-wallet"
   | "otp"
   | "home"
   | "chat"
@@ -52,7 +50,6 @@ export type Screen =
   | "notifications"
 
 function AppContent() {
-  const { isConnected, isLoading } = useCardanoWallet()
   const [currentScreen, setCurrentScreen] = useState<Screen>("onboarding")
   const [selectedChat, setSelectedChat] = useState<string | null>(null)
   const [paymentData, setPaymentData] = useState<{
@@ -60,24 +57,6 @@ function AppContent() {
     token?: string
     recipient?: string
   } | null>(null)
-
-  // Auto-redirect: Check wallet connection status
-  useEffect(() => {
-    // Don't auto-redirect if user is already on a specific screen
-    if (currentScreen !== "onboarding" && currentScreen !== "connect-wallet") {
-      return
-    }
-    
-    if (isLoading) return // Wait for wallet check to complete
-    
-    if (isConnected) {
-      // Wallet connected, go to home
-      setCurrentScreen("home")
-    } else if (currentScreen === "onboarding") {
-      // Stay on onboarding if not connected
-      // Don't change screen if user is on connect-wallet
-    }
-  }, [isConnected, isLoading, currentScreen])
 
   const navigate = (screen: Screen, chatId?: string, data?: any) => {
     setCurrentScreen(screen)
@@ -88,14 +67,11 @@ function AppContent() {
   return (
     <div className="min-h-screen bg-background">
       {currentScreen === "onboarding" && <OnboardingScreen onNavigate={navigate} />}
-      {currentScreen === "connect-wallet" && <ConnectWalletScreen onNavigate={navigate} />}
       {currentScreen === "login" && <LoginScreen onNavigate={navigate} />}
+      {currentScreen === "import-wallet" && <ImportWalletScreen onNavigate={navigate} />}
       {currentScreen === "otp" && <OTPScreen onNavigate={navigate} />}
       {currentScreen === "home" && <HomeScreen onNavigate={navigate} onSelectChat={(id) => navigate("chat", id)} />}
-      {/* Standard chat - comment out to use enhanced version */}
-      {/* {currentScreen === "chat" && <ChatScreen chatId={selectedChat} onNavigate={navigate} />} */}
-      {/* Enhanced chat with Phase 3 features - ACTIVE for demo */}
-      {currentScreen === "chat" && <ChatScreenEnhanced chatId={selectedChat} onNavigate={navigate} />}
+      {currentScreen === "chat" && <ChatScreen chatId={selectedChat} onNavigate={navigate} />}
       {currentScreen === "new-chat" && <NewChatScreen onNavigate={navigate} />}
       {currentScreen === "profile" && <ProfileScreen onNavigate={navigate} />}
       {currentScreen === "wallet" && <WalletScreen onNavigate={navigate} />}
@@ -118,10 +94,8 @@ function AppContent() {
 
 export default function App() {
   return (
-    <CardanoWalletProvider>
-      <AppProvider>
-        <AppContent />
-      </AppProvider>
-    </CardanoWalletProvider>
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
   )
 }
