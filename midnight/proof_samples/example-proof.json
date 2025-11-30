@@ -1,0 +1,17 @@
+{
+  "id": "proof-example-001",
+  "proofHash": "a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456",
+  "contractName": "qualifyProof",
+  "inputs": {
+    "score": 85,
+    "threshold": 80
+  },
+  "output": true,
+  "timestamp": "2024-11-30T03:30:00.000Z",
+  "metadata": {
+    "receiptType": "metamesh",
+    "version": "1.0",
+    "description": "Example eligibility proof - user score of 85 meets threshold of 80"
+  }
+}
+

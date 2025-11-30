@@ -1,0 +1,43 @@
+{
+  "issueRequest": {
+    "request": {
+      "recipientDID": "did:cardano:test123",
+      "recipientAddress": "addr_test1qz2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3jcu5d8ps7zex2k2xt3uqxgjqnnj3758qy7se82nag3qer8wqk",
+      "amount": "1000000",
+      "description": "Payment for services rendered",
+      "issuer": "MetaMesh"
+    },
+    "response": {
+      "id": "1732920000000",
+      "metadataURI": "ipfs://QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    }
+  },
+  "markIssued": {
+    "request": {
+      "id": "1732920000000",
+      "txId": "abc123def456ghi789jkl012mno345pqr678stu901vwx234yz"
+    },
+    "response": {
+      "ok": true
+    }
+  },
+  "getRequests": {
+    "response": {
+      "1732920000000": {
+        "id": "1732920000000",
+        "metadataURI": "ipfs://QmXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "metadata": {
+          "name": "MetaMesh Receipt 1732920000000",
+          "description": "Payment for services rendered",
+          "issuer": "MetaMesh",
+          "recipientDID": "did:cardano:test123",
+          "recipientAddress": "addr_test1qz2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzer3jcu5d8ps7zex2k2xt3uqxgjqnnj3758qy7se82nag3qer8wqk",
+          "amount": "1000000",
+          "issuedAt": "2024-11-30T03:30:00.000Z"
+        },
+        "status": "pending"
+      }
+    }
+  }
+}
+
