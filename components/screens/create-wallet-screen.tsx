@@ -1,25 +1,24 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ArrowLeft, Eye, EyeOff, CheckCircle2 } from "lucide-react"
+import { ArrowLeft, Eye, EyeOff, CheckCircle2, Copy, Shield } from "lucide-react"
+import QRCode from "react-qr-code"
 import type { Screen } from "@/app/page"
-import { validateMnemonic, deriveKeysFromMnemonic, encryptMnemonic, saveWalletToStorage, type WalletData } from "@/lib/wallet/wallet-utils"
+import { generateMnemonic, deriveKeysFromMnemonic, encryptMnemonic, saveWalletToStorage, type WalletData } from "@/lib/wallet/wallet-utils"
 import { useWallet } from "@/lib/wallet/wallet-context"
 
-interface ImportWalletScreenProps {
+interface CreateWalletScreenProps {
   onNavigate: (screen: Screen) => void
 }
 
-type Step = "mnemonic" | "password"
+type Step = "mnemonic" | "confirm" | "password"
 
-export function ImportWalletScreen({ onNavigate }: ImportWalletScreenProps) {
+export function CreateWalletScreen({ onNavigate }: CreateWalletScreenProps) {
   const [step, setStep] = useState<Step>("mnemonic")
-  const [seedPhrase, setSeedPhrase] = useState("")
-  const [showPhrase, setShowPhrase] = useState(false)
-  const [isValid, setIsValid] = useState(false)
+  const [mnemonic, setMnemonic] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -29,16 +28,17 @@ export function ImportWalletScreen({ onNavigate }: ImportWalletScreenProps) {
 
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3333'
 
-  const handleValidate = () => {
-    const words = seedPhrase.trim().split(/\s+/)
-    if (words.length >= 12 && validateMnemonic(seedPhrase.trim())) {
-      setIsValid(true)
-      setTimeout(() => {
-        setStep("password")
-      }, 500)
-    } else {
-      setIsValid(false)
-    }
+  // Generate mnemonic on mount
+  if (!mnemonic) {
+    setMnemonic(generateMnemonic())
+  }
+
+  const handleCopyMnemonic = () => {
+    navigator.clipboard.writeText(mnemonic)
+  }
+
+  const handleConfirmSaved = () => {
+    setStep("password")
   }
 
   const validatePassword = () => {
@@ -60,7 +60,7 @@ export function ImportWalletScreen({ onNavigate }: ImportWalletScreenProps) {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleImportWallet = async () => {
+  const handleCreateWallet = async () => {
     if (!validatePassword()) {
       return
     }
@@ -70,10 +70,10 @@ export function ImportWalletScreen({ onNavigate }: ImportWalletScreenProps) {
 
     try {
       // Derive keys from mnemonic
-      const { publicKey, address } = await deriveKeysFromMnemonic(seedPhrase.trim())
+      const { publicKey, address } = await deriveKeysFromMnemonic(mnemonic)
 
       // Encrypt mnemonic
-      const encryptedMnemonic = encryptMnemonic(seedPhrase.trim(), password)
+      const encryptedMnemonic = encryptMnemonic(mnemonic, password)
 
       // Create wallet data
       const walletData: WalletData = {
@@ -107,8 +107,8 @@ export function ImportWalletScreen({ onNavigate }: ImportWalletScreenProps) {
       // Navigate to home
       onNavigate("home")
     } catch (error) {
-      console.error("Error importing wallet:", error)
-      setErrors({ general: "Failed to import wallet. Please check your mnemonic phrase." })
+      console.error("Error creating wallet:", error)
+      setErrors({ general: "Failed to create wallet. Please try again." })
     } finally {
       setIsLoading(false)
     }
@@ -123,7 +123,7 @@ export function ImportWalletScreen({ onNavigate }: ImportWalletScreenProps) {
         >
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
-        <span className="text-foreground font-medium">Import Wallet</span>
+        <span className="text-foreground font-medium">Create Wallet</span>
       </div>
 
       <div className="flex-1 px-6 pt-8">
@@ -137,49 +137,59 @@ export function ImportWalletScreen({ onNavigate }: ImportWalletScreenProps) {
               className="space-y-6"
             >
               <div className="space-y-2">
-                <h2 className="text-2xl font-bold text-foreground">Enter Recovery Phrase</h2>
-                <p className="text-muted-foreground">Paste your 12-word seed phrase to recover your wallet</p>
+                <h2 className="text-2xl font-bold text-foreground">Your Recovery Phrase</h2>
+                <p className="text-muted-foreground">
+                  Write down these 12 words in order. Keep them safe and never share them with anyone.
+                </p>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm text-muted-foreground">Recovery Phrase (12 words)</label>
-                <div className="relative">
-                  <textarea
-                    value={seedPhrase}
-                    onChange={(e) => {
-                      setSeedPhrase(e.target.value)
-                      setIsValid(false)
-                    }}
-                    placeholder="word1 word2 word3 ... word12"
-                    className="w-full h-32 bg-card border-input text-foreground placeholder:text-muted-foreground rounded-2xl p-4 pr-12"
-                  />
-                  <button
-                    onClick={() => setShowPhrase(!showPhrase)}
-                    className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
-                  >
-                    {showPhrase ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
+              <div className="bg-card rounded-2xl p-6 border border-input space-y-4">
+                <div className="grid grid-cols-3 gap-3">
+                  {mnemonic.split(" ").map((word, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground w-6">{index + 1}.</span>
+                      <span className="text-foreground font-medium">{word}</span>
+                    </div>
+                  ))}
+                </div>
+                
+                {/* QR Code */}
+                <div className="flex justify-center pt-4 border-t border-input">
+                  <div className="bg-white p-4 rounded-xl">
+                    <QRCode 
+                      value={mnemonic}
+                      size={200}
+                      style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                    />
+                  </div>
+                </div>
+                
+                <Button
+                  onClick={handleCopyMnemonic}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy Phrase
+                </Button>
+              </div>
+
+              <div className="bg-primary/10 rounded-2xl p-4 flex items-start gap-3">
+                <Shield className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-foreground">
+                  <p className="font-medium mb-1">Important Security Notice</p>
+                  <p className="text-muted-foreground">
+                    If you lose this phrase, you will lose access to your wallet forever. Store it in a safe place.
+                  </p>
                 </div>
               </div>
 
-              <AnimatePresence>
-                {isValid && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-primary/20 rounded-2xl p-4 flex items-center gap-3"
-                  >
-                    <CheckCircle2 className="w-5 h-5 text-primary" />
-                    <span className="text-primary font-medium">Seed phrase is valid!</span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
               <Button
-                onClick={handleValidate}
+                onClick={handleConfirmSaved}
                 className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg rounded-2xl"
               >
-                Verify Phrase
+                I have saved my phrase
+                <ArrowLeft className="ml-2 w-5 h-5 rotate-180" />
               </Button>
             </motion.div>
           )}
@@ -240,11 +250,11 @@ export function ImportWalletScreen({ onNavigate }: ImportWalletScreenProps) {
               </div>
 
               <Button
-                onClick={handleImportWallet}
+                onClick={handleCreateWallet}
                 disabled={isLoading}
                 className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg rounded-2xl disabled:opacity-50"
               >
-                {isLoading ? "Importing Wallet..." : "Import Wallet"}
+                {isLoading ? "Creating Wallet..." : "Create Wallet"}
               </Button>
             </motion.div>
           )}
@@ -253,3 +263,4 @@ export function ImportWalletScreen({ onNavigate }: ImportWalletScreenProps) {
     </div>
   )
 }
+

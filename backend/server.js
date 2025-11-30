@@ -3,6 +3,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { pinJSON } = require('./services/ipfs');
 const STORE = require('./services/store');
+const authRoutes = require('./routes/auth');
+const walletRoutes = require('./routes/wallet');
 
 const app = express();
 app.use(bodyParser.json());
@@ -75,6 +77,12 @@ app.get('/requests', (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Auth routes
+app.use('/auth', authRoutes);
+
+// Wallet routes
+app.use('/wallet', walletRoutes);
 
 const PORT = process.env.PORT || 3333;
 app.listen(PORT, () => console.log(`Backend listening on :${PORT}`));

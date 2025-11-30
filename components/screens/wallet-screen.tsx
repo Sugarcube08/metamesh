@@ -2,9 +2,10 @@
 
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, ArrowUpRight, ArrowDownLeft, CreditCard, Eye, EyeOff, TrendingUp, RefreshCw } from "lucide-react"
+import { ArrowLeft, ArrowUpRight, ArrowDownLeft, CreditCard, Eye, EyeOff, TrendingUp, RefreshCw, LogOut } from "lucide-react"
 import type { Screen } from "@/app/page"
 import { useState } from "react"
+import { useCardanoWallet } from "@/lib/wallet/cardano-wallet-context"
 
 interface WalletScreenProps {
   onNavigate: (screen: Screen) => void
@@ -25,6 +26,24 @@ const TRANSACTIONS = [
 
 export function WalletScreen({ onNavigate }: WalletScreenProps) {
   const [showBalance, setShowBalance] = useState(true)
+  const { address, balance, walletName, networkId, disconnect, refreshBalance } = useCardanoWallet()
+
+  const handleDisconnect = () => {
+    disconnect()
+    onNavigate("onboarding")
+  }
+
+  const handleRefresh = async () => {
+    try {
+      await refreshBalance()
+    } catch (error) {
+      console.error("Error refreshing balance:", error)
+    }
+  }
+
+  const networkName = networkId === 0 ? "Preprod" : networkId === 1 ? "Mainnet" : "Unknown"
+  const displayBalance = balance || "0.00"
+  const displayAddress = address || ""
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -37,7 +56,10 @@ export function WalletScreen({ onNavigate }: WalletScreenProps) {
           <ArrowLeft className="w-5 h-5 text-foreground" />
         </button>
         <h1 className="flex-1 text-xl font-bold text-foreground">Wallet</h1>
-        <button className="w-10 h-10 bg-card rounded-2xl flex items-center justify-center hover:bg-card/80 transition-colors">
+        <button 
+          onClick={handleRefresh}
+          className="w-10 h-10 bg-card rounded-2xl flex items-center justify-center hover:bg-card/80 transition-colors"
+        >
           <RefreshCw className="w-5 h-5 text-foreground" />
         </button>
       </div>
@@ -73,7 +95,21 @@ export function WalletScreen({ onNavigate }: WalletScreenProps) {
               </button>
             </div>
 
-            <h2 className="text-4xl font-bold text-primary-foreground mb-2">{showBalance ? "$5,625.00" : "••••••"}</h2>
+            <h2 className="text-4xl font-bold text-primary-foreground mb-2">
+              {showBalance ? `${displayBalance} ADA` : "••••••"}
+            </h2>
+            {displayAddress && (
+              <p className="text-primary-foreground/70 text-xs mt-2 break-all">
+                {displayAddress.length > 30 
+                  ? `${displayAddress.substring(0, 20)}...${displayAddress.substring(displayAddress.length - 10)}`
+                  : displayAddress}
+              </p>
+            )}
+            {walletName && (
+              <p className="text-primary-foreground/70 text-xs mt-1">
+                {walletName.toUpperCase()} • {networkName}
+              </p>
+            )}
 
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-primary-foreground" />
@@ -176,6 +212,18 @@ export function WalletScreen({ onNavigate }: WalletScreenProps) {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Disconnect Button */}
+      <div className="px-4 pb-6">
+        <Button
+          onClick={handleDisconnect}
+          variant="outline"
+          className="w-full h-12 bg-transparent border-destructive/20 text-destructive hover:bg-destructive/10 rounded-2xl"
+        >
+          <LogOut className="w-5 h-5 mr-2" />
+          Disconnect Wallet
+        </Button>
       </div>
     </div>
   )

@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import { Hexagon, Shield, Zap, ArrowRight } from "lucide-react"
+import { Hexagon, ArrowRight, Wallet } from "lucide-react"
 import type { Screen } from "@/app/page"
 
 interface OnboardingScreenProps {
@@ -10,6 +10,7 @@ interface OnboardingScreenProps {
 }
 
 export function OnboardingScreen({ onNavigate }: OnboardingScreenProps) {
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden flex flex-col">
       {/* Abstract background pattern */}
@@ -59,57 +60,25 @@ export function OnboardingScreen({ onNavigate }: OnboardingScreenProps) {
         >
           Decentralized messaging meets Web3 payments on Cardano
         </motion.p>
-
-        {/* Features */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          className="flex gap-8 mb-16"
-        >
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-12 h-12 bg-card rounded-2xl flex items-center justify-center">
-              <Shield className="w-6 h-6 text-primary" />
-            </div>
-            <span className="text-sm text-muted-foreground">Encrypted</span>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-12 h-12 bg-card rounded-2xl flex items-center justify-center">
-              <Zap className="w-6 h-6 text-primary" />
-            </div>
-            <span className="text-sm text-muted-foreground">Instant</span>
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <div className="w-12 h-12 bg-card rounded-2xl flex items-center justify-center">
-              <Hexagon className="w-6 h-6 text-primary" />
-            </div>
-            <span className="text-sm text-muted-foreground">Web3</span>
-          </div>
-        </motion.div>
       </div>
 
-      {/* CTA Buttons */}
+      {/* CTA Button */}
       <motion.div
         initial={{ y: 40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.5 }}
-        className="px-6 pb-12 space-y-4 relative z-10"
+        className="px-6 pb-12 relative z-10"
       >
         <Button
-          onClick={() => onNavigate("login")}
+          onClick={() => onNavigate("connect-wallet")}
           className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-lg rounded-2xl transition-all hover:shadow-[0_0_30px_rgba(0,194,141,0.3)]"
         >
-          Create Wallet
+          <Wallet className="mr-2 w-5 h-5" />
+          Connect Wallet
           <ArrowRight className="ml-2 w-5 h-5" />
-        </Button>
-        <Button
-          onClick={() => onNavigate("login")}
-          variant="outline"
-          className="w-full h-14 bg-transparent border-foreground/20 text-foreground hover:bg-card hover:text-foreground font-semibold text-lg rounded-2xl"
-        >
-          Import Wallet
         </Button>
       </motion.div>
     </div>
   )
 }
+
